@@ -24,7 +24,8 @@ conversation_history = {}
 class AIChatV2(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.model = genai.GenerativeModel('gemini-1.5-flash-latest')
+        # ★★★ ここを修正しました ★★★
+        self.model = genai.GenerativeModel('gemini-1.5-flash')
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
