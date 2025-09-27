@@ -24,7 +24,7 @@ conversation_history = {}
 class AIChatV2(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        # ★★★ ここを修正しました ★★★
+        # 最新の安定したモデル名を指定
         self.model = genai.GenerativeModel('gemini-1.5-flash')
 
     @commands.Cog.listener()
