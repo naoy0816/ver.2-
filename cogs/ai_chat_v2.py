@@ -25,7 +25,7 @@ class AIChatV2(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         # ★★★ ここを修正しました ★★★
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        self.model = genai.GenerativeModel('gemini-pro')
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
