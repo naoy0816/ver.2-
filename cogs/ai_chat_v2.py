@@ -1,84 +1,57 @@
-# cogs/ai_chat_v2.py
+# bot.py
 import discord
 from discord.ext import commands
-import google.generativeai as genai
 import os
-import json
-from collections import deque
+import asyncio
+import google.generativeai as genai
 
-# 新しいプロンプトテンプレートをインポート
-from . import prompt_templates as prompts
+# Botの基本的な設定
+intents = discord.Intents.default()
+intents.message_content = True
+bot = commands.Bot(command_prefix='!', intents=intents, help_command=None)
 
-# 簡易的なペルソナ読み込み機能
-def load_persona(name="mesugaki"):
-    path = f'./cogs/personas/{name}.json'
-    try:
-        with open(path, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return None
-
-# 会話履歴を保持する (簡易版)
-conversation_history = {}
-
-class AIChatV2(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-        # 最新の安定したモデル名を指定
-        self.model = genai.GenerativeModel('gemini-1.5-flash')
-
-    @commands.Cog.listener()
-    async def on_message(self, message: discord.Message):
-        # 自分自身のメッセージやコマンドは無視
-        if message.author.bot or message.content.startswith('!'):
-            return
-
-        # ボットがメンションされた時だけ反応
-        if not self.bot.user.mentioned_in(message):
-            return
-
-        # 会話履歴を更新
-        channel_id = str(message.channel.id)
-        if channel_id not in conversation_history:
-            conversation_history[channel_id] = deque(maxlen=6)
-        
-        history_text = "\n".join([f"{msg['author']}: {msg['content']}" for msg in conversation_history[channel_id]])
-        
-        # --- ペルソナとプロンプトの準備 ---
-        persona = load_persona("mesugaki")
-        if not persona:
-            await message.channel.send("（ペルソナファイルがないんだけど…？話せないわよ）")
-            return
-
-        user_message_clean = message.content.replace(f'<@!{self.bot.user.id}>', '').strip()
-
-        async with message.channel.typing():
+@bot.event
+async def setup_hook():
+    genai.configure(api_key=os.getenv('GOOGLE_API_KEY'))
+    print("Google Generative AI configured.")
+    print('------------------------------------------------------')
+    
+    # cogsフォルダ内の全Cogを読み込む
+    for filename in os.listdir('./cogs'):
+        if filename.endswith('.py') and not filename.startswith('_'):
+            cog_name = f'cogs.{filename[:-3]}'
             try:
-                # --- プロンプトを組み立てる ---
-                prompt_data = {
-                    "base_persona_settings": persona["settings"]["char_settings"].format(user_name=message.author.display_name),
-                    "user_name": message.author.display_name,
-                    "relationship_level": 0.3, # 固定の仮データ
-                    "mood_text": "ニュートラル", # 固定の仮データ
-                    "user_message": user_message_clean,
-                    "conversation_history": history_text or "（まだ会話してないわ）"
-                }
-                
-                final_prompt = prompts.AI_CORE_PROMPT_TEMPLATE.format(**prompt_data)
-                
-                # --- Gemini APIを呼び出し、応答を生成 ---
-                response = await self.model.generate_content_async(final_prompt)
-                bot_response_text = response.text.strip()
-                
-                # --- 応答を送信 ---
-                await message.channel.send(bot_response_text)
-
-                # --- 会話履歴を保存 ---
-                conversation_history[channel_id].append({"author": message.author.display_name, "content": user_message_clean})
-                conversation_history[channel_id].append({"author": "アタシ", "content": bot_response_text})
-
+                await bot.load_extension(cog_name)
+                print(f'✅ Successfully loaded: {filename}')
             except Exception as e:
-                await message.channel.send(f"（うぅ…アタシの頭脳にエラーが発生したわ…アンタのせいよ！: {e}）")
+                print(f'❌ Failed to load {filename}: {e}')
+    
+    print('------------------------------------------------------')
+    
+    try:
+        # スラッシュコマンドを同期
+        synced = await bot.tree.sync()
+        print(f"Synced {len(synced)} slash command(s).")
+    except Exception as e:
+        print(f"Failed to sync slash commands: {e}")
 
-async def setup(bot):
-    await bot.add_cog(AIChatV2(bot))
+@bot.event
+async def on_ready():
+    print(f'Logged in as: {bot.user.name}')
+    print('Bot is now online and ready!')
+
+# Botを起動
+async def main():
+    token = os.getenv('DISCORD_BOT_TOKEN')
+    if token is None:
+        print("Error: DISCORD_BOT_TOKEN is not set in environment variables.")
+        return
+    
+    async with bot:
+        await bot.start(token)
+
+if __name__ == "__main__":
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("Bot is shutting down...")
