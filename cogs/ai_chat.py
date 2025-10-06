@@ -12,7 +12,7 @@ from collections import deque
 
 from . import _utils as utils
 from . import _persona_manager as persona_manager
-from . import _prompt_templates as prompts # ★★★ ここを修正 ★★★
+from . import _prompt_templates as prompts
 
 conversation_history = {}
 
