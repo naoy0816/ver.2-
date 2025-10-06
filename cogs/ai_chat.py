@@ -66,7 +66,7 @@ class AIChat(commands.Cog):
                 # STEP 2: 記憶の参照と情報収集
                 target_user_id = decision_data.get("TARGET_USER_ID")
                 mood_data = utils.load_mood_data().get(channel_id, {"average": 0.0})
-                mood_score = mood_data["average"]
+                mood_score = mood_data.get("average", 0.0)
                 mood_text = "ニュートラル"
                 if mood_score > 0.2: mood_text = "ポジティブ"
                 elif mood_score < -0.2: mood_text = "ネガティブ"
