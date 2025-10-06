@@ -11,7 +11,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # -------------------- Stage 2: 実行環境 --------------------
-# ★★★ ここが重要！ 'slim' ではない、完全版のPythonを使用する ★★★
+# ★★★ ここを修正！ 'slim' ではない、完全版のPythonを使用する ★★★
 FROM python:3.11 as runtime
 
 WORKDIR /app
