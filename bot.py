@@ -16,21 +16,20 @@ async def setup_hook():
     print("Google Generative AI configured.")
     print('------------------------------------------------------')
     
-    # ★★★ ここを修正 ★★★
-    # 新しいCogを読み込むようにファイル名を指定
-    cog_to_load = 'cogs.ai_chat_v2' 
-    try:
-        await bot.load_extension(cog_to_load)
-        print(f'✅ Successfully loaded: {cog_to_load}.py')
-    except Exception as e:
-        print(f'❌ Failed to load {cog_to_load}.py: {e}')
-    
-    # 他のCogも必要であればここで読み込む
-    # await bot.load_extension('cogs.commands')
+    # cogsフォルダ内の全Cogを読み込む
+    for filename in os.listdir('./cogs'):
+        if filename.endswith('.py') and not filename.startswith('_'):
+            cog_name = f'cogs.{filename[:-3]}'
+            try:
+                await bot.load_extension(cog_name)
+                print(f'✅ Successfully loaded: {filename}')
+            except Exception as e:
+                print(f'❌ Failed to load {filename}: {e}')
     
     print('------------------------------------------------------')
     
     try:
+        # スラッシュコマンドを同期
         synced = await bot.tree.sync()
         print(f"Synced {len(synced)} slash command(s).")
     except Exception as e:
